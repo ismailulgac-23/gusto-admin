@@ -1,6 +1,6 @@
 import service from "axios";
 
-export const SERVER_URL = "http://localhost:3000";
+export const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000";
 // export const SERVER_URL = "http://95.217.214.161:3000";
 export const API_URL = `${SERVER_URL}/api`;
 
