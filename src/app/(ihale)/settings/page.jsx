@@ -6,6 +6,7 @@ import Label from '@/components/form/Label';
 import Input from '@/components/form/input/InputField';
 import LoadingContainer from '@/components/royal-common/LoadingContainer';
 import { Icon } from "@iconify/react";
+import axios from '@/axios';
 
 const SettingsPage = () => {
   const [cities, setCities] = useState([]);
@@ -21,20 +22,8 @@ const SettingsPage = () => {
   const fetchCities = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/settings/admin/cities`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCities(data.data || []);
-      } else {
-        console.error('Şehirler yüklenemedi');
-      }
+      const response = await axios.get(`/settings/admin/cities`);
+      setCities(response.data.data || []);
     } catch (error) {
       console.error('Hata:', error);
     } finally {
@@ -105,7 +94,7 @@ const SettingsPage = () => {
 
   const handleBulkUpdate = async () => {
     const activeCityIds = cities.filter(city => city.isActive).map(city => city.id);
-    
+
     try {
       setSaving(true);
       const token = localStorage.getItem('token');
@@ -138,9 +127,9 @@ const SettingsPage = () => {
 
   return (
     <div>
-      <PageBreadcrumb 
-        pageTitle="Genel Ayarlar" 
-        onSave={handleBulkUpdate} 
+      <PageBreadcrumb
+        pageTitle="Genel Ayarlar"
+        onSave={handleBulkUpdate}
         saving={saving}
         saveText="Değişiklikleri Kaydet"
       />
@@ -152,7 +141,7 @@ const SettingsPage = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Uygulamanın aktif olduğu şehirleri seçin. Kullanıcılar kayıt olurken sadece aktif şehirlerden seçim yapabilecekler.
               </p>
-              
+
               {/* Yeni Şehir Ekle */}
               <div className="flex gap-2 items-end">
                 <div className="flex-1">
