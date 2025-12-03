@@ -59,7 +59,11 @@ export default function Users({ addButton, title, userType }) {
     }, [userType, pagination.page, searchQuery]);
 
     useEffect(() => {
-        setNavItems(["#", "Ad & Soyad", "Telefon", "Email", "Kullanıcı Tipi", "Aktif", "İşlem"]);
+        setNavItems(
+            userType == 'PROVIDER' ? 
+            ["#", "Şirket","Ad & Soyad", "Telefon", "Email", "Kullanıcı Tipi", "Aktif", "İşlem"]
+            : ["#", "Ad & Soyad", "Telefon", "Email", "Kullanıcı Tipi", "Aktif", "İşlem"]
+        );
     }, []);
 
     const handleSearch = (e) => {
@@ -140,6 +144,9 @@ export default function Users({ addButton, title, userType }) {
                                                 <Icon icon="ri:user-line" className="text-2xl text-gray-400" />
                                             </div>
                                         )}
+                                    </TableCell>
+                                    <TableCell className="px-5 py-4 sm:px-6 text-start">
+                                        {user.companyName || '-'}
                                     </TableCell>
                                     <TableCell className="px-5 py-4 sm:px-6 text-start">
                                         {user.name || '-'}
