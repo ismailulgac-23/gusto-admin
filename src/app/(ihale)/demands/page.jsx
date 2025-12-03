@@ -166,7 +166,7 @@ export default function Demands() {
                     </div>
                     <TableContainer
                         data={demands}
-                        navItems={["Başlık", "Kullanıcı", "Kategori", "Bütçe", "Durum", "Acil", "Teklif Sayısı", "Oluşturulma", "İşlemler"]}
+                        navItems={["Başlık", "Kullanıcı", "Kategori", "Durum", "Acil", "Teklif Sayısı", "Oluşturulma", "İşlemler"]}
                         renderItem={(demand) => (
                             <TableRow key={demand.id}>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start font-medium">
@@ -214,9 +214,6 @@ export default function Demands() {
                                     ) : (
                                         <span className="text-gray-400">-</span>
                                     )}
-                                </TableCell>
-                                <TableCell className="px-5 py-4 sm:px-6 text-start">
-                                    {demand.budget ? `${demand.budget} ₺` : "-"}
                                 </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
                                     {getStatusBadge(demand.status)}

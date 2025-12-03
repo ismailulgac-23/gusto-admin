@@ -175,20 +175,6 @@ export default function AddDemand() {
                             </div>
 
                             <div>
-                                <Label htmlFor="budget">Bütçe (₺)</Label>
-                                <Input
-                                    type="number"
-                                    id="budget"
-                                    name="budget"
-                                    value={formData.budget}
-                                    onChange={handleInputChange}
-                                    placeholder="0.00"
-                                    min="0"
-                                    step="0.01"
-                                />
-                            </div>
-
-                            <div>
                                 <Label htmlFor="peopleCount">Kişi Sayısı</Label>
                                 <Input
                                     type="number"

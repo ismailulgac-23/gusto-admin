@@ -133,14 +133,6 @@ export default function DemandDetail() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                                Bütçe
-                            </label>
-                            <p className="text-gray-900 dark:text-white">
-                                {demand.budget ? `${demand.budget} ₺` : "Belirtilmemiş"}
-                            </p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                                 Acil
                             </label>
                             <p className="text-gray-900 dark:text-white">
