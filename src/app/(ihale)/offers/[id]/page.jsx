@@ -15,6 +15,7 @@ export default function OfferDetail() {
     const [offer, setOffer] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [approvalInProgress, setApprovalInProgress] = useState(false);
 
     useEffect(() => {
         fetchOffer();
@@ -35,6 +36,25 @@ export default function OfferDetail() {
         }
     };
 
+    const handleApproval = async () => {
+        if (!window.confirm('Bu teklifi onaylamak istediğinize emin misiniz?')) {
+            return;
+        }
+        
+        setApprovalInProgress(true);
+        
+        try {
+            await axios.patch(`/admin/offers/${id}/approval`, { isApproved: true });
+            fetchOffer(); // Tekrar yükle
+            alert('Teklif başarıyla onaylandı.');
+        } catch (err) {
+            console.error('Error updating offer approval:', err);
+            alert('Teklif onaylanırken bir hata oluştu.');
+        } finally {
+            setApprovalInProgress(false);
+        }
+    };
+
     const getStatusBadge = (status) => {
         const statusMap = {
             PENDING: { label: "Beklemede", class: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400" },
@@ -46,6 +66,19 @@ export default function OfferDetail() {
         return (
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.class}`}>
                 {statusInfo.label}
+            </span>
+        );
+    };
+
+    const getApprovalBadge = (isApproved) => {
+        if (isApproved === undefined || isApproved === null) return null;
+        return (
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                isApproved 
+                    ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" 
+                    : "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
+            }`}>
+                {isApproved ? "Onaylandı" : "Onay Bekliyor"}
             </span>
         );
     };
@@ -90,6 +123,12 @@ export default function OfferDetail() {
                                 Durum
                             </label>
                             {getStatusBadge(offer.status)}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                Onay Durumu
+                            </label>
+                            {getApprovalBadge(offer.isApproved)}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -209,6 +248,32 @@ export default function OfferDetail() {
                                     </p>
                                 </div>
                             )}
+                        </div>
+                    </ComponentCard>
+                )}
+
+                {/* Onaylama Butonu - Sadece onay bekleyen teklifler için */}
+                {offer.isApproved === false && (
+                    <ComponentCard title="Onay İşlemi">
+                        <div className="flex gap-4">
+                            <Button
+                                variant="success"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={handleApproval}
+                                disabled={approvalInProgress}
+                            >
+                                {approvalInProgress ? (
+                                    <>
+                                        <Icon icon="eos-icons:loading" className="mr-2" />
+                                        İşleniyor...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Icon icon="ri:check-line" className="mr-2" />
+                                        Onayla
+                                    </>
+                                )}
+                            </Button>
                         </div>
                     </ComponentCard>
                 )}

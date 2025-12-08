@@ -166,13 +166,34 @@ export default function Demands() {
                     </div>
                     <TableContainer
                         data={demands}
-                        navItems={["Başlık", "Kullanıcı", "Kategori", "Durum", "Acil", "Teklif Sayısı", "Oluşturulma", "İşlemler"]}
+                        navItems={["Talep No", "Başlık", "İl", "Kullanıcı", "Kategori", "Durum", "Acil", "Teklif Sayısı", "Oluşturulma", "İşlemler"]}
                         renderItem={(demand) => (
                             <TableRow key={demand.id}>
+                                <TableCell className="px-5 py-4 sm:px-6 text-start">
+                                    <div className="flex flex-col gap-1">
+                                        {demand.demandNumber ? (
+                                            <span className="font-semibold text-primary dark:text-primary-light">
+                                                #{demand.demandNumber}
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-400 text-xs">-</span>
+                                        )}
+                                    </div>
+                                </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start font-medium">
                                     <div className="max-w-xs truncate" title={demand.title}>
                                         {demand.title}
                                     </div>
+                                </TableCell>
+                                <TableCell className="px-5 py-4 sm:px-6 text-start">
+                                    {demand.cities && demand.cities.length > 0 ? (
+                                        <div className="flex items-center gap-1 text-sm font-medium">
+                                            <Icon icon="mdi:map-marker" className="text-primary" />
+                                            <span>{demand.cities.map(dc => dc.city?.name).filter(Boolean).join(', ')}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-400 text-xs">-</span>
+                                    )}
                                 </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
                                     {demand.user ? (

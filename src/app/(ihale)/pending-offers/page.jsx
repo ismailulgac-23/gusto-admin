@@ -9,25 +9,19 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import ComponentCard from "@/components/common/ComponentCard";
 import axios from "@/axios";
 
-export default function Offers() {
+export default function PendingOffers() {
     const [offers, setOffers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [deleteInProgress, setDeleteInProgress] = useState({});
+    const [approvalInProgress, setApprovalInProgress] = useState({});
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 20,
         total: 0,
         totalPages: 0,
     });
-    const [filters, setFilters] = useState({
-        status: undefined,
-        demandId: undefined,
-        providerId: undefined,
-        isApproved: undefined,
-    });
 
-    const fetchOffers = async () => {
+    const fetchPendingOffers = async () => {
         setIsLoading(true);
         setError(null);
         
@@ -35,43 +29,40 @@ export default function Offers() {
             const params = {
                 page: pagination.page,
                 limit: pagination.limit,
-                ...(filters.status && { status: filters.status }),
-                ...(filters.demandId && { demandId: filters.demandId }),
-                ...(filters.providerId && { providerId: filters.providerId }),
-                ...(filters.isApproved !== undefined && { isApproved: filters.isApproved.toString() }),
             };
-            const response = await axios.get('/admin/offers', { params });
+            const response = await axios.get('/admin/offers/pending', { params });
             setOffers(response.data.data || []);
             if (response.data.pagination) {
                 setPagination(response.data.pagination);
             }
         } catch (err) {
-            console.error('Error fetching offers:', err);
-            setError('Teklifler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+            console.error('Error fetching pending offers:', err);
+            setError('Bekleyen teklifler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchOffers();
-    }, [pagination.page, filters.status, filters.demandId, filters.providerId, filters.isApproved]);
+        fetchPendingOffers();
+    }, [pagination.page]);
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Bu teklifi silmek istediğinize emin misiniz?')) {
+    const handleApproval = async (id) => {
+        if (!window.confirm('Bu teklifi onaylamak istediğinize emin misiniz?')) {
             return;
         }
         
-        setDeleteInProgress(prev => ({ ...prev, [id]: true }));
+        setApprovalInProgress(prev => ({ ...prev, [id]: true }));
         
         try {
-            await axios.delete(`/admin/offers/${id}`);
-            fetchOffers();
+            await axios.patch(`/admin/offers/${id}/approval`, { isApproved: true });
+            fetchPendingOffers();
+            alert('Teklif başarıyla onaylandı.');
         } catch (err) {
-            console.error('Error deleting offer:', err);
-            alert('Teklif silinirken bir hata oluştu.');
+            console.error('Error updating offer approval:', err);
+            alert('Teklif onaylanırken bir hata oluştu.');
         } finally {
-            setDeleteInProgress(prev => ({ ...prev, [id]: false }));
+            setApprovalInProgress(prev => ({ ...prev, [id]: false }));
         }
     };
 
@@ -90,23 +81,10 @@ export default function Offers() {
         );
     };
 
-    const getApprovalBadge = (isApproved) => {
-        if (isApproved === undefined || isApproved === null) return null;
-        return (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                isApproved 
-                    ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" 
-                    : "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
-            }`}>
-                {isApproved ? "Onaylandı" : "Onay Bekliyor"}
-            </span>
-        );
-    };
-
     if (isLoading) {
         return (
             <div>
-                <PageBreadcrumb pageTitle="Teklif Yönetimi" />
+                <PageBreadcrumb pageTitle="Bekleyen Teklifler" />
                 <div className="flex justify-center items-center h-64">
                     <Icon icon="eos-icons:loading" className="text-4xl text-primary" />
                 </div>
@@ -117,7 +95,7 @@ export default function Offers() {
     if (error) {
         return (
             <div>
-                <PageBreadcrumb pageTitle="Teklif Yönetimi" />
+                <PageBreadcrumb pageTitle="Bekleyen Teklifler" />
                 <div className="flex justify-center items-center h-64">
                     <div className="text-center">
                         <div className="bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg">
@@ -131,49 +109,20 @@ export default function Offers() {
 
     return (
         <div>
-            <PageBreadcrumb pageTitle="Teklif Yönetimi" />
+            <PageBreadcrumb pageTitle="Bekleyen Teklifler" />
             <div className="space-y-6">
-                <ComponentCard 
-                    title="Teklifler"
-                    titleRightRenderer={
-                        <Link href="/offers/add">
-                            <Button className="bg-primary text-white px-4 py-2">
-                                Ekle
-                            </Button>
-                        </Link>
-                    }
-                >
-                    <div className="mb-4 flex flex-col sm:flex-row gap-4">
-                        <select
-                            value={filters.status || 'all'}
-                            onChange={(e) => setFilters({ ...filters, status: e.target.value === 'all' ? undefined : e.target.value })}
-                            className="rounded-md border border-input bg-background px-3 py-2"
-                        >
-                            <option value="all">Tüm Durumlar</option>
-                            <option value="PENDING">Beklemede</option>
-                            <option value="ACCEPTED">Kabul Edildi</option>
-                            <option value="REJECTED">Reddedildi</option>
-                            <option value="COMPLETED">Tamamlandı</option>
-                        </select>
-                        <select
-                            value={filters.isApproved === undefined ? 'all' : filters.isApproved ? 'approved' : 'pending'}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                setFilters({ 
-                                    ...filters, 
-                                    isApproved: value === 'all' ? undefined : value === 'approved' 
-                                });
-                            }}
-                            className="rounded-md border border-input bg-background px-3 py-2"
-                        >
-                            <option value="all">Tüm Onay Durumları</option>
-                            <option value="approved">Onaylanmış</option>
-                            <option value="pending">Onay Bekleyen</option>
-                        </select>
+                <ComponentCard title="Onay Bekleyen Teklifler">
+                    <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                        <div className="flex items-center gap-2">
+                            <Icon icon="ri:information-line" className="text-yellow-600 dark:text-yellow-400 text-xl" />
+                            <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                                Bu sayfada onay bekleyen teklifler listelenmektedir. Teklifleri onaylayarak veya reddederek yönetebilirsiniz.
+                            </p>
+                        </div>
                     </div>
                     <TableContainer
                         data={offers}
-                        navItems={["Talep", "Sağlayıcı", "Mesaj", "Fiyat", "Tahmini Süre", "Durum", "Onay Durumu", "Oluşturulma", "İşlemler"]}
+                        navItems={["Talep", "Talep Sahibi", "Sağlayıcı", "Mesaj", "Fiyat", "Tahmini Süre", "Durum", "Oluşturulma", "İşlemler"]}
                         renderItem={(offer) => (
                             <TableRow key={offer.id}>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
@@ -182,6 +131,17 @@ export default function Offers() {
                                             <div className="max-w-xs truncate" title={offer.demand.title}>
                                                 {offer.demand.title}
                                             </div>
+                                        </Link>
+                                    ) : (
+                                        <span className="text-gray-400">-</span>
+                                    )}
+                                </TableCell>
+                                <TableCell className="px-5 py-4 sm:px-6 text-start">
+                                    {offer.demand?.user ? (
+                                        <Link href={`/users/edit/${offer.demand.user.id}`} className="flex items-center gap-2 text-primary hover:underline">
+                                            <span className="text-sm">
+                                                {offer.demand.user.name || offer.demand.user.phoneNumber || "Kullanıcı"}
+                                            </span>
                                         </Link>
                                     ) : (
                                         <span className="text-gray-400">-</span>
@@ -198,7 +158,7 @@ export default function Offers() {
                                                 />
                                             )}
                                             <span className="text-sm">
-                                                {offer.provider.name || offer.provider.phoneNumber || "Sağlayıcı"}
+                                                {offer.provider.name || offer.provider.companyName || offer.provider.phoneNumber || "Sağlayıcı"}
                                             </span>
                                         </Link>
                                     ) : (
@@ -219,9 +179,6 @@ export default function Offers() {
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
                                     {getStatusBadge(offer.status)}
                                 </TableCell>
-                                <TableCell className="px-5 py-4 sm:px-6 text-start">
-                                    {getApprovalBadge(offer.isApproved)}
-                                </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start text-sm text-gray-500 dark:text-gray-400">
                                     {new Date(offer.createdAt).toLocaleDateString('tr-TR')}
                                 </TableCell>
@@ -231,28 +188,26 @@ export default function Offers() {
                                             <Icon icon="ri:eye-line" className="text-base" />
                                         </Button>
                                     </Link>
-                                    <Link href={`/offers/edit/${offer.id}`}>
-                                        <Button size="sm" variant="info" className="flex items-center justify-center">
-                                            <Icon icon="ri:edit-line" className="text-base" />
-                                        </Button>
-                                    </Link>
                                     <Button 
                                         size="sm" 
-                                        variant="danger" 
-                                        className="flex items-center justify-center"
-                                        onClick={() => handleDelete(offer.id)}
-                                        disabled={deleteInProgress[offer.id]}
+                                        variant="success" 
+                                        className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white"
+                                        onClick={() => handleApproval(offer.id)}
+                                        disabled={approvalInProgress[offer.id]}
                                     >
-                                        {deleteInProgress[offer.id] ? (
+                                        {approvalInProgress[offer.id] ? (
                                             <Icon icon="eos-icons:loading" className="text-base" />
                                         ) : (
-                                            <Icon icon="ri:delete-bin-line" className="text-base" />
+                                            <>
+                                                <Icon icon="ri:check-line" className="text-base mr-1" />
+                                                Onayla
+                                            </>
                                         )}
                                     </Button>
                                 </TableCell>
                             </TableRow>
                         )}
-                        emptyMessage="Henüz teklif bulunmamaktadır"
+                        emptyMessage="Onay bekleyen teklif bulunmamaktadır"
                     />
                     {pagination.totalPages > 1 && (
                         <div className="mt-4 flex items-center justify-between">

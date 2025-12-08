@@ -21,6 +21,7 @@ import SidebarWidget from "./SidebarWidget";
 
 import { Icon } from "@iconify/react";
 import { useUserStore } from "@/context/UserContext";
+import axios from "@/axios";
 
 
 
@@ -28,9 +29,32 @@ const AppSidebar = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
   const [navItems, setItems] = useState([]);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const userStore = useUserStore();
 
+
+  // Bekleyen teklif sayısını çek
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const response = await axios.get('/admin/offers/pending/count');
+        if (response.data.success && response.data.data) {
+          setPendingCount(response.data.data.count || 0);
+        }
+      } catch (err) {
+        console.error('Error fetching pending offers count:', err);
+      }
+    };
+
+    const moderator = userStore.user?.isModerator;
+    if (!moderator) {
+      fetchPendingCount();
+      // Her 30 saniyede bir güncelle
+      const interval = setInterval(fetchPendingCount, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [userStore.user]);
 
   useEffect(() => {
     const moderator = userStore.user?.isModerator;
@@ -72,6 +96,12 @@ const AppSidebar = () => {
           icon: <Icon icon="ri:hand-heart-line" className="text-2xl" />,
           name: "Teklifler",
           path: "/offers",
+        },
+        {
+          icon: <Icon icon="ri:time-line" className="text-2xl" />,
+          name: "Bekleyen Teklifler",
+          path: "/pending-offers",
+          badge: true, // Badge gösterilecek
         },
         {
           icon: <Icon icon="ri:star-line" className="text-2xl" />,
@@ -163,19 +193,31 @@ const AppSidebar = () => {
             nav.path && (
               <Link
                 href={nav.path}
-                className={`menu-item group ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
+                className={`menu-item group relative ${isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                   }`}
               >
                 <span
-                  className={`${isActive(nav.path)
+                  className={`relative ${isActive(nav.path)
                     ? "menu-item-icon-active"
                     : "menu-item-icon-inactive"
                     }`}
                 >
                   {nav.icon}
+                  {!isExpanded && !isHovered && !isMobileOpen && nav.badge && pendingCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center z-10">
+                      {pendingCount > 9 ? '9+' : pendingCount}
+                    </span>
+                  )}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className={`menu-item-text`}>{nav.name}</span>
+                  <span className={`menu-item-text flex items-center justify-between w-full`}>
+                    <span>{nav.name}</span>
+                    {nav.badge && pendingCount > 0 && (
+                      <span className="ml-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
+                        {pendingCount > 99 ? '99+' : pendingCount}
+                      </span>
+                    )}
+                  </span>
                 )}
               </Link>
             )

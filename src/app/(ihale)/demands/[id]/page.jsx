@@ -87,6 +87,20 @@ export default function DemandDetail() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                Talep Numarası
+                            </label>
+                            {demand.demandNumber ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-semibold text-lg">
+                                        #{demand.demandNumber}
+                                    </span>
+                                </div>
+                            ) : (
+                                <p className="text-gray-400">-</p>
+                            )}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                                 Başlık
                             </label>
                             <p className="text-gray-900 dark:text-white font-medium">{demand.title}</p>
@@ -96,6 +110,28 @@ export default function DemandDetail() {
                                 Durum
                             </label>
                             {getStatusBadge(demand.status)}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                İl
+                            </label>
+                            {demand.cities && demand.cities.length > 0 ? (
+                                <div className="flex items-center gap-2">
+                                    <Icon icon="mdi:map-marker" className="text-primary text-xl" />
+                                    <div className="flex flex-wrap gap-2">
+                                        {demand.cities.map((dc, index) => (
+                                            <span 
+                                                key={dc.id || index}
+                                                className="inline-flex items-center px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm font-medium"
+                                            >
+                                                {dc.city?.name || 'Bilinmeyen İl'}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-gray-400">-</p>
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -197,11 +233,27 @@ export default function DemandDetail() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                                Teklif Sayısı
+                                Teklif Sayıları
                             </label>
-                            <p className="text-gray-900 dark:text-white">
-                                {demand._count?.offers || demand.offers?.length || 0}
-                            </p>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-sm font-medium">
+                                            <Icon icon="mdi:check-circle" className="mr-1" />
+                                            Onaylı: {demand.approvedOffersCount || 0}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 text-sm font-medium">
+                                            <Icon icon="mdi:clock-outline" className="mr-1" />
+                                            Bekleyen: {demand.pendingOffersCount || 0}
+                                        </span>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Toplam: {demand._count?.offers || demand.offers?.length || 0}
+                                </p>
+                            </div>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -237,10 +289,87 @@ export default function DemandDetail() {
                 )}
 
                 {demand.questionResponses && (
-                    <ComponentCard title="Soru Cevapları">
-                        <pre className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-sm overflow-auto">
-                            {JSON.stringify(demand.questionResponses, null, 2)}
-                        </pre>
+                    <ComponentCard title="İl ve İlçe Koordinasyonu">
+                        {(() => {
+                            try {
+                                const responses = typeof demand.questionResponses === 'string' 
+                                    ? JSON.parse(demand.questionResponses) 
+                                    : demand.questionResponses;
+                                
+                                // Check if it's the city-county structure
+                                if (responses && typeof responses === 'object' && !Array.isArray(responses)) {
+                                    const cities = Object.keys(responses);
+                                    
+                                    if (cities.length > 0 && Array.isArray(responses[cities[0]])) {
+                                        // It's the city-county structure
+                                        return (
+                                            <div className="space-y-4">
+                                                {cities.map((cityName, cityIndex) => {
+                                                    const counties = responses[cityName] || [];
+                                                    return (
+                                                        <div 
+                                                            key={cityIndex}
+                                                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700"
+                                                        >
+                                                            <div className="flex items-center gap-2 mb-3">
+                                                                <Icon 
+                                                                    icon="mdi:city" 
+                                                                    className="text-2xl text-primary" 
+                                                                />
+                                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                                    {cityName}
+                                                                </h3>
+                                                                <span className="ml-auto px-2.5 py-0.5 rounded-full bg-primary/20 text-primary text-xs font-medium">
+                                                                    {counties.length} İlçe
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {counties.length > 0 ? (
+                                                                    counties.map((county, countyIndex) => (
+                                                                        <span
+                                                                            key={countyIndex}
+                                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:shadow-md transition-shadow"
+                                                                        >
+                                                                            <Icon 
+                                                                                icon="mdi:map-marker" 
+                                                                                className="text-primary text-sm" 
+                                                                            />
+                                                                            {county}
+                                                                        </span>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="text-sm text-gray-500 dark:text-gray-400 italic">
+                                                                        İlçe bilgisi bulunmamaktadır
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    }
+                                }
+                                
+                                // Fallback to JSON display for other structures
+                                return (
+                                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                                        <pre className="text-sm overflow-auto">
+                                            {JSON.stringify(responses, null, 2)}
+                                        </pre>
+                                    </div>
+                                );
+                            } catch (error) {
+                                // If parsing fails, show as JSON
+                                return (
+                                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                                        <pre className="text-sm overflow-auto">
+                                            {JSON.stringify(demand.questionResponses, null, 2)}
+                                        </pre>
+                                    </div>
+                                );
+                            }
+                        })()}
                     </ComponentCard>
                 )}
 
