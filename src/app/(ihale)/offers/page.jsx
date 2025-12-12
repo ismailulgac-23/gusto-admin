@@ -24,7 +24,6 @@ export default function Offers() {
         status: undefined,
         demandId: undefined,
         providerId: undefined,
-        isApproved: undefined,
     });
 
     const fetchOffers = async () => {
@@ -38,7 +37,6 @@ export default function Offers() {
                 ...(filters.status && { status: filters.status }),
                 ...(filters.demandId && { demandId: filters.demandId }),
                 ...(filters.providerId && { providerId: filters.providerId }),
-                ...(filters.isApproved !== undefined && { isApproved: filters.isApproved.toString() }),
             };
             const response = await axios.get('/admin/offers', { params });
             setOffers(response.data.data || []);
@@ -55,7 +53,7 @@ export default function Offers() {
 
     useEffect(() => {
         fetchOffers();
-    }, [pagination.page, filters.status, filters.demandId, filters.providerId, filters.isApproved]);
+    }, [pagination.page, filters.status, filters.demandId, filters.providerId]);
 
     const handleDelete = async (id) => {
         if (!window.confirm('Bu teklifi silmek istediğinize emin misiniz?')) {
@@ -90,18 +88,7 @@ export default function Offers() {
         );
     };
 
-    const getApprovalBadge = (isApproved) => {
-        if (isApproved === undefined || isApproved === null) return null;
-        return (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                isApproved 
-                    ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" 
-                    : "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
-            }`}>
-                {isApproved ? "Onaylandı" : "Onay Bekliyor"}
-            </span>
-        );
-    };
+    // Teklif onay mekanizması kaldırıldı - teklifler direkt onaylanıyor
 
     if (isLoading) {
         return (
@@ -155,25 +142,10 @@ export default function Offers() {
                             <option value="REJECTED">Reddedildi</option>
                             <option value="COMPLETED">Tamamlandı</option>
                         </select>
-                        <select
-                            value={filters.isApproved === undefined ? 'all' : filters.isApproved ? 'approved' : 'pending'}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                setFilters({ 
-                                    ...filters, 
-                                    isApproved: value === 'all' ? undefined : value === 'approved' 
-                                });
-                            }}
-                            className="rounded-md border border-input bg-background px-3 py-2"
-                        >
-                            <option value="all">Tüm Onay Durumları</option>
-                            <option value="approved">Onaylanmış</option>
-                            <option value="pending">Onay Bekleyen</option>
-                        </select>
                     </div>
                     <TableContainer
                         data={offers}
-                        navItems={["Talep", "Sağlayıcı", "Mesaj", "Fiyat", "Tahmini Süre", "Durum", "Onay Durumu", "Oluşturulma", "İşlemler"]}
+                        navItems={["Talep", "Sağlayıcı", "Mesaj", "Fiyat", "Tahmini Süre", "Durum", "Oluşturulma", "İşlemler"]}
                         renderItem={(offer) => (
                             <TableRow key={offer.id}>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
@@ -218,9 +190,6 @@ export default function Offers() {
                                 </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
                                     {getStatusBadge(offer.status)}
-                                </TableCell>
-                                <TableCell className="px-5 py-4 sm:px-6 text-start">
-                                    {getApprovalBadge(offer.isApproved)}
                                 </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start text-sm text-gray-500 dark:text-gray-400">
                                     {new Date(offer.createdAt).toLocaleDateString('tr-TR')}

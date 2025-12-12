@@ -25,8 +25,10 @@ export default function Demands() {
         categoryId: undefined,
         userId: undefined,
         isUrgent: undefined,
+        isApproved: undefined,
         search: '',
     });
+    const [approvalInProgress, setApprovalInProgress] = useState({});
 
     const fetchDemands = async () => {
         setIsLoading(true);
@@ -40,6 +42,7 @@ export default function Demands() {
                 ...(filters.categoryId && { categoryId: filters.categoryId }),
                 ...(filters.userId && { userId: filters.userId }),
                 ...(filters.isUrgent !== undefined && { isUrgent: filters.isUrgent }),
+                ...(filters.isApproved !== undefined && { isApproved: filters.isApproved }),
                 ...(filters.search && { search: filters.search }),
             };
             const response = await axios.get('/admin/demands', { params });
@@ -57,7 +60,7 @@ export default function Demands() {
 
     useEffect(() => {
         fetchDemands();
-    }, [pagination.page, filters.status, filters.categoryId, filters.userId, filters.isUrgent, filters.search]);
+    }, [pagination.page, filters.status, filters.categoryId, filters.userId, filters.isUrgent, filters.isApproved, filters.search]);
 
     const handleDelete = async (id) => {
         if (!window.confirm('Bu talebi silmek istediğinize emin misiniz?')) {
@@ -75,6 +78,38 @@ export default function Demands() {
         } finally {
             setDeleteInProgress(prev => ({ ...prev, [id]: false }));
         }
+    };
+
+    const handleApproval = async (id, isApproved) => {
+        const action = isApproved ? 'onaylamak' : 'reddetmek';
+        if (!window.confirm(`Bu talebi ${action} istediğinize emin misiniz?`)) {
+            return;
+        }
+        
+        setApprovalInProgress(prev => ({ ...prev, [id]: true }));
+        
+        try {
+            await axios.patch(`/admin/demands/${id}/approval`, { isApproved });
+            fetchDemands();
+        } catch (err) {
+            console.error('Error updating demand approval:', err);
+            alert(`Talep ${action === 'onaylamak' ? 'onaylanırken' : 'reddedilirken'} bir hata oluştu.`);
+        } finally {
+            setApprovalInProgress(prev => ({ ...prev, [id]: false }));
+        }
+    };
+
+    const getApprovalBadge = (isApproved) => {
+        if (isApproved === undefined || isApproved === null) return null;
+        return (
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                isApproved 
+                    ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" 
+                    : "bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
+            }`}>
+                {isApproved ? "Onaylandı" : "Onay Bekliyor"}
+            </span>
+        );
     };
 
     const getStatusBadge = (status) => {
@@ -163,10 +198,25 @@ export default function Demands() {
                             <option value="true">Acil</option>
                             <option value="false">Normal</option>
                         </select>
+                        <select
+                            value={filters.isApproved === undefined ? 'all' : filters.isApproved ? 'approved' : 'pending'}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setFilters({ 
+                                    ...filters, 
+                                    isApproved: value === 'all' ? undefined : value === 'approved' 
+                                });
+                            }}
+                            className="rounded-md border border-input bg-background px-3 py-2"
+                        >
+                            <option value="all">Tüm Onay Durumları</option>
+                            <option value="approved">Onaylanmış</option>
+                            <option value="pending">Onay Bekleyen</option>
+                        </select>
                     </div>
                     <TableContainer
                         data={demands}
-                        navItems={["Talep No", "Başlık", "İl", "Kullanıcı", "Kategori", "Durum", "Acil", "Teklif Sayısı", "Oluşturulma", "İşlemler"]}
+                        navItems={["Talep No", "Başlık", "İl", "Kullanıcı", "Kategori", "Durum", "Onay Durumu", "Acil", "Teklif Sayısı", "Oluşturulma", "İşlemler"]}
                         renderItem={(demand) => (
                             <TableRow key={demand.id}>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
@@ -240,6 +290,9 @@ export default function Demands() {
                                     {getStatusBadge(demand.status)}
                                 </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
+                                    {getApprovalBadge(demand.isApproved)}
+                                </TableCell>
+                                <TableCell className="px-5 py-4 sm:px-6 text-start">
                                     {demand.isUrgent ? (
                                         <span className="text-red-500">
                                             <Icon icon="ri:alert-line" className="text-xl" />
@@ -265,6 +318,38 @@ export default function Demands() {
                                             <Icon icon="ri:edit-line" className="text-base" />
                                         </Button>
                                     </Link>
+                                    {!demand.isApproved && (
+                                        <Button 
+                                            size="sm" 
+                                            variant="success" 
+                                            className="flex items-center justify-center"
+                                            onClick={() => handleApproval(demand.id, true)}
+                                            disabled={approvalInProgress[demand.id]}
+                                            title="Onayla"
+                                        >
+                                            {approvalInProgress[demand.id] ? (
+                                                <Icon icon="eos-icons:loading" className="text-base" />
+                                            ) : (
+                                                <Icon icon="ri:check-line" className="text-base" />
+                                            )}
+                                        </Button>
+                                    )}
+                                    {demand.isApproved && (
+                                        <Button 
+                                            size="sm" 
+                                            variant="warning" 
+                                            className="flex items-center justify-center"
+                                            onClick={() => handleApproval(demand.id, false)}
+                                            disabled={approvalInProgress[demand.id]}
+                                            title="Reddet"
+                                        >
+                                            {approvalInProgress[demand.id] ? (
+                                                <Icon icon="eos-icons:loading" className="text-base" />
+                                            ) : (
+                                                <Icon icon="ri:close-line" className="text-base" />
+                                            )}
+                                        </Button>
+                                    )}
                                     <Button 
                                         size="sm" 
                                         variant="danger" 
