@@ -34,16 +34,16 @@ const AppSidebar = () => {
   const userStore = useUserStore();
 
 
-  // Bekleyen teklif sayısını çek
+  // Bekleyen talep sayısını çek
   useEffect(() => {
     const fetchPendingCount = async () => {
       try {
-        const response = await axios.get('/admin/offers/pending/count');
+        const response = await axios.get('/admin/demands/pending/count');
         if (response.data.success && response.data.data) {
           setPendingCount(response.data.data.count || 0);
         }
       } catch (err) {
-        console.error('Error fetching pending offers count:', err);
+        console.error('Error fetching pending demands count:', err);
       }
     };
 
@@ -99,8 +99,8 @@ const AppSidebar = () => {
         },
         {
           icon: <Icon icon="ri:time-line" className="text-2xl" />,
-          name: "Bekleyen Teklifler",
-          path: "/pending-offers",
+          name: "Bekleyen Talepler",
+          path: "/pending-demands",
           badge: true, // Badge gösterilecek
         },
         {
