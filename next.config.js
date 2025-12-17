@@ -9,6 +9,9 @@ const nextConfig = {
     });
     return config;
   },
+  // Empty turbopack config to silence the warning
+  // Next.js will use webpack when webpack config is present
+  turbopack: {},
   experimental: {
     // Enable streaming for improved page loading
     serverActions: {
