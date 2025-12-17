@@ -12,19 +12,12 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
-    optimizeFonts: false,
   },
+  swcMinify: false,
   // Disable static page generation for dynamic routes like chat
   // This helps prevent prerendering errors
   staticPageGenerationTimeout: 180,
   images: {
-    domains: ['*'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
     unoptimized: true,
   },
   // Increase memory limit for Next.js operations
