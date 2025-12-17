@@ -1,5 +1,7 @@
 
 const nextConfig = {
+  // Use webpack for SVG handling with @svgr/webpack
+  // Turbopack support for @svgr is still experimental
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
@@ -13,7 +15,6 @@ const nextConfig = {
       bodySizeLimit: "10mb",
     },
   },
-  swcMinify: false,
   // Disable static page generation for dynamic routes like chat
   // This helps prevent prerendering errors
   staticPageGenerationTimeout: 180,
@@ -24,10 +25,6 @@ const nextConfig = {
   compiler: {
     // Remove console logs in production
     removeConsole: process.env.NODE_ENV === "production",
-  },
-  // Prevent server-side rendering for specific routes that use browser APIs
-  eslint: {
-    ignoreDuringBuilds: true, // Skip ESLint during build
   },
   typescript: {
     ignoreBuildErrors: true, // Skip TypeScript errors during build
