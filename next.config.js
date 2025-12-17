@@ -12,6 +12,7 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    optimizeFonts: false,
   },
   // Disable static page generation for dynamic routes like chat
   // This helps prevent prerendering errors
