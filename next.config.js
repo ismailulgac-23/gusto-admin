@@ -2,11 +2,43 @@
 const nextConfig = {
   // Use webpack for SVG handling with @svgr/webpack
   // Turbopack support for @svgr is still experimental
-  webpack(config) {
+  webpack(config, { isServer }) {
+    // SVG handling
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],
     });
+
+    // Memory optimizations for webpack
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // Vendor chunk
+            vendor: {
+              name: 'vendor',
+              chunks: 'all',
+              test: /node_modules/,
+              priority: 20,
+            },
+            // Common chunk
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+              priority: 10,
+              reuseExistingChunk: true,
+              enforce: true,
+            },
+          },
+        },
+      };
+    }
+
     return config;
   },
   // Empty turbopack config to silence the warning
@@ -24,7 +56,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Increase memory limit for Next.js operations
+  // Memory optimizations
   compiler: {
     // Remove console logs in production
     removeConsole: process.env.NODE_ENV === "production",
