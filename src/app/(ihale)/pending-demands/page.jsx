@@ -8,12 +8,14 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import ComponentCard from "@/components/common/ComponentCard";
 import axios from "@/axios";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import EditDemandModal from "@/components/Demands/EditDemandModal";
 
 export default function PendingDemands() {
     const [demands, setDemands] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [approvalInProgress, setApprovalInProgress] = useState({});
+    const [editingDemandId, setEditingDemandId] = useState(null);
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 20,
@@ -199,13 +201,21 @@ export default function PendingDemands() {
                                     })}
                                 </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start flex gap-2">
-                                    <Link href={`/demands/${demand.id}`} className="w-10 h-10 flex items-center justify-center">
+                                    <Link href={`/demands/${demand.id}`} className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" title="Görüntüle">
                                         <Icon icon="ri:eye-line" className="text-xl" />
                                     </Link>
                                     <button
-                                        className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white w-8 h-8 p-0 rounded-xl"
+                                        className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white w-8 h-8 p-0 rounded-xl transition-colors"
+                                        onClick={() => setEditingDemandId(demand.id)}
+                                        title="Düzenle"
+                                    >
+                                        <Icon icon="ri:edit-line" className="text-base" />
+                                    </button>
+                                    <button
+                                        className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white w-8 h-8 p-0 rounded-xl transition-colors"
                                         onClick={() => handleApproval(demand.id, true)}
                                         disabled={approvalInProgress[demand.id]}
+                                        title="Onayla"
                                     >
                                         {approvalInProgress[demand.id] ? (
                                             <Icon icon="eos-icons:loading" className="text-base" />
@@ -215,9 +225,10 @@ export default function PendingDemands() {
                                     </button>
                                     
                                     <button
-                                        className="flex items-center justify-center bg-red-600 hover:bg-red-700 text-white w-8 h-8 p-0 rounded-xl"
+                                        className="flex items-center justify-center bg-red-600 hover:bg-red-700 text-white w-8 h-8 p-0 rounded-xl transition-colors"
                                         onClick={() => handleApproval(demand.id, false)}
                                         disabled={approvalInProgress[demand.id]}
+                                        title="Reddet"
                                     >
                                         {approvalInProgress[demand.id] ? (
                                             <Icon icon="eos-icons:loading" className="text-base" />
@@ -257,6 +268,17 @@ export default function PendingDemands() {
                     )}
                 </ComponentCard>
             </div>
+            
+            {/* Edit Demand Modal */}
+            <EditDemandModal
+                isOpen={!!editingDemandId}
+                onClose={() => setEditingDemandId(null)}
+                demandId={editingDemandId}
+                onSuccess={() => {
+                    fetchPendingDemands();
+                    setEditingDemandId(null);
+                }}
+            />
         </div>
     );
 }
