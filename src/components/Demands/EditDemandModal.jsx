@@ -32,10 +32,10 @@ export default function EditDemandModal({ isOpen, onClose, demandId, onSuccess }
     const [categories, setCategories] = useState([]);
     const [users, setUsers] = useState([]);
     const [cities, setCities] = useState([]);
-    const [selectedCityIds, setSelectedCityIds] = useState([]);
-    const [countiesByCity, setCountiesByCity] = useState({}); // { cityId: [counties] }
-    const [availableCounties, setAvailableCounties] = useState({}); // { cityName: [counties] }
-    const [loadingCounties, setLoadingCounties] = useState({});
+    const [selectedCityId, setSelectedCityId] = useState('');
+    const [selectedCounty, setSelectedCounty] = useState('');
+    const [availableCounties, setAvailableCounties] = useState([]); // Array of counties for selected city
+    const [loadingCounties, setLoadingCounties] = useState(false);
     
     useEffect(() => {
         if (isOpen && demandId) {
@@ -55,35 +55,33 @@ export default function EditDemandModal({ isOpen, onClose, demandId, onSuccess }
             
             setDemand(data);
             
-            // Parse countie JSON if exists
-            let parsedCounties = {};
+            // Parse countie JSON if exists - now expecting single city/county
+            let selectedCity = '';
+            let selectedCountyName = '';
             if (data.countie) {
                 try {
-                    parsedCounties = JSON.parse(data.countie);
+                    const parsedCounties = JSON.parse(data.countie);
+                    const cityNames = Object.keys(parsedCounties);
+                    if (cityNames.length > 0) {
+                        selectedCity = cityNames[0];
+                        const counties = parsedCounties[selectedCity];
+                        if (counties && counties.length > 0) {
+                            selectedCountyName = counties[0]; // Take first county
+                        }
+                    }
                 } catch (e) {
                     console.error('Error parsing countie:', e);
                 }
             }
             
-            // Set selected cities
-            const cityIds = data.cities?.map(c => c.cityId) || [];
-            setSelectedCityIds(cityIds);
+            // Set selected city (take first one if multiple exist)
+            const cityId = data.cities?.[0]?.cityId || '';
+            setSelectedCityId(cityId);
+            setSelectedCounty(selectedCountyName);
             
-            // Load counties for selected cities
-            const countiesMap = {};
-            for (const cityRelation of data.cities || []) {
-                const cityName = cityRelation.city?.name;
-                if (cityName && parsedCounties[cityName]) {
-                    countiesMap[cityRelation.cityId] = parsedCounties[cityName];
-                }
-            }
-            setCountiesByCity(countiesMap);
-            
-            // Load counties data for all selected cities
-            for (const cityRelation of data.cities || []) {
-                if (cityRelation.city?.name) {
-                    loadCountiesForCity(cityRelation.city.name, cityRelation.cityId);
-                }
+            // Load counties for selected city
+            if (selectedCity) {
+                loadCountiesForCity(selectedCity);
             }
             
             setFormData({
@@ -141,51 +139,36 @@ export default function EditDemandModal({ isOpen, onClose, demandId, onSuccess }
         }
     };
     
-    const loadCountiesForCity = async (cityName, cityId) => {
-        if (availableCounties[cityName]) return; // Already loaded
+    const loadCountiesForCity = async (cityName) => {
+        if (availableCounties.length > 0) return; // Already loaded
         
-        setLoadingCounties(prev => ({ ...prev, [cityId]: true }));
+        setLoadingCounties(true);
         try {
             const response = await axios.get(`/locations/cities/${cityName}/counties`);
-            setAvailableCounties(prev => ({
-                ...prev,
-                [cityName]: response.data.data || []
-            }));
+            setAvailableCounties(response.data.data || []);
         } catch (err) {
             console.error('Error fetching counties:', err);
         } finally {
-            setLoadingCounties(prev => ({ ...prev, [cityId]: false }));
+            setLoadingCounties(false);
         }
     };
     
-    const handleCityToggle = async (cityId) => {
+    const handleCityChange = async (cityId) => {
         const city = cities.find(c => c.id === cityId);
         if (!city) return;
         
-        if (selectedCityIds.includes(cityId)) {
-            // Remove city
-            setSelectedCityIds(prev => prev.filter(id => id !== cityId));
-            setCountiesByCity(prev => {
-                const newMap = { ...prev };
-                delete newMap[cityId];
-                return newMap;
-            });
-        } else {
-            // Add city
-            setSelectedCityIds(prev => [...prev, cityId]);
-            // Load counties for this city
-            await loadCountiesForCity(city.name, cityId);
+        setSelectedCityId(cityId);
+        setSelectedCounty(''); // Reset county selection
+        setAvailableCounties([]); // Reset available counties
+        
+        // Load counties for this city
+        if (city.name) {
+            await loadCountiesForCity(city.name);
         }
     };
     
-    const handleCountyToggle = (cityId, county) => {
-        setCountiesByCity(prev => {
-            const current = prev[cityId] || [];
-            const newCounties = current.includes(county)
-                ? current.filter(c => c !== county)
-                : [...current, county];
-            return { ...prev, [cityId]: newCounties };
-        });
+    const handleCountyChange = (county) => {
+        setSelectedCounty(county);
     };
     
     const renderQuestionInput = (question) => {
@@ -411,19 +394,16 @@ export default function EditDemandModal({ isOpen, onClose, demandId, onSuccess }
         setError(null);
         
         try {
-            // Prepare countie JSON
+            // Prepare countie JSON for single city/county
+            const city = cities.find(c => c.id === selectedCityId);
             const countieData = {};
-            for (const cityId of selectedCityIds) {
-                const city = cities.find(c => c.id === cityId);
-                const counties = countiesByCity[cityId] || [];
-                if (city && counties.length > 0) {
-                    countieData[city.name] = counties;
-                }
+            if (city && selectedCounty) {
+                countieData[city.name] = [selectedCounty];
             }
             
             const updateData = {
                 ...formData,
-                cityIds: selectedCityIds,
+                cityIds: selectedCityId ? [selectedCityId] : [],
                 countie: Object.keys(countieData).length > 0 ? JSON.stringify(countieData) : '',
                 latitude: formData.latitude ? parseFloat(formData.latitude) : null,
                 longitude: formData.longitude ? parseFloat(formData.longitude) : null,
@@ -597,67 +577,57 @@ export default function EditDemandModal({ isOpen, onClose, demandId, onSuccess }
                             </div>
                         </div>
                         
-                        {/* Cities & Counties */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Şehirler ve İlçeler *
-                        </label>
-                            <div className="space-y-4 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                {cities.map(city => {
-                                    const isSelected = selectedCityIds.includes(city.id);
-                                    const cityCounties = availableCounties[city.name] || [];
-                                    const selectedCounties = countiesByCity[city.id] || [];
-                                    
-                                    return (
-                                        <div key={city.id} className="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isSelected}
-                                                    onChange={() => handleCityToggle(city.id)}
-                                                    className="w-5 h-5 text-primary rounded"
-                                                />
-                                                <span className="font-medium text-gray-900 dark:text-white">
-                                                    {city.name}
-                                                </span>
-                                                {loadingCounties[city.id] && (
-                                                    <Icon icon="eos-icons:loading" className="text-sm" />
-                                                )}
-                                            </div>
-                                            
-                                            {isSelected && cityCounties.length > 0 && (
-                                                <div className="ml-8 mt-2 space-y-2">
-                                                    <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                                        İlçeler:
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {cityCounties.map(county => {
-                                                            const isCountySelected = selectedCounties.includes(county);
-                                                            return (
-                                                                <label
-                                                                    key={county}
-                                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer transition-colors ${
-                                                                        isCountySelected
-                                                                            ? 'bg-primary/10 border-primary text-primary'
-                                                                            : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300'
-                                                                    }`}
-                                                                >
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={isCountySelected}
-                                                                        onChange={() => handleCountyToggle(city.id, county)}
-                                                                        className="w-4 h-4 text-primary rounded"
-                                                                    />
-                                                                    <span className="text-sm">{county}</span>
-                                                                </label>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )}
+                        {/* City & County - Single Selection */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Şehir *
+                                </label>
+                                <select
+                                    required
+                                    value={selectedCityId}
+                                    onChange={(e) => handleCityChange(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                                >
+                                    <option value="">Şehir Seçiniz</option>
+                                    {cities.filter(city => city.isActive).map(city => (
+                                        <option key={city.id} value={city.id}>
+                                            {city.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    İlçe *
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        required
+                                        value={selectedCounty}
+                                        onChange={(e) => handleCountyChange(e.target.value)}
+                                        disabled={!selectedCityId || loadingCounties}
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white disabled:opacity-50"
+                                    >
+                                        <option value="">İlçe Seçiniz</option>
+                                        {availableCounties.map(county => (
+                                            <option key={county} value={county}>
+                                                {county}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {loadingCounties && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <Icon icon="eos-icons:loading" className="text-sm" />
                                         </div>
-                                    );
-                                })}
+                                    )}
+                                </div>
+                                {!selectedCityId && (
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        Önce bir şehir seçiniz
+                                    </p>
+                                )}
                             </div>
                         </div>
                         

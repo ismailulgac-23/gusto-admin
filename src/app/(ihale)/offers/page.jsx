@@ -145,7 +145,7 @@ export default function Offers() {
                     </div>
                     <TableContainer
                         data={offers}
-                        navItems={["Talep", "Sağlayıcı", "Mesaj", "Fiyat", "Tahmini Süre", "Durum", "Oluşturulma", "İşlemler"]}
+                        navItems={["Talep", "Sağlayıcı", "Mesaj", "Fiyat", "Durum", "Oluşturulma", "İşlemler"]}
                         renderItem={(offer) => (
                             <TableRow key={offer.id}>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
@@ -184,9 +184,6 @@ export default function Offers() {
                                 </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
                                     {offer.price ? `${offer.price} ₺` : "-"}
-                                </TableCell>
-                                <TableCell className="px-5 py-4 sm:px-6 text-start">
-                                    {offer.estimatedTime || <span className="text-gray-400">-</span>}
                                 </TableCell>
                                 <TableCell className="px-5 py-4 sm:px-6 text-start">
                                     {getStatusBadge(offer.status)}

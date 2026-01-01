@@ -7,6 +7,7 @@ import Button from "@/components/ui/button/Button";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import axios from "@/axios";
 import Link from "next/link";
+import EditDemandModal from "@/components/Demands/EditDemandModal";
 
 export default function DemandDetail() {
     const router = useRouter();
@@ -15,6 +16,7 @@ export default function DemandDetail() {
     const [demand, setDemand] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
         fetchDemand();
@@ -78,9 +80,9 @@ export default function DemandDetail() {
 
     return (
         <div>
-            <PageBreadcrumb 
+            <PageBreadcrumb
                 pageTitle="Talep Detayı"
-                create={`/demands/edit/${id}`}
+                onCreate={() => setIsEditModalOpen(true)}
             />
             <div className="space-y-6">
                 <ComponentCard title="Talep Bilgileri">
@@ -415,6 +417,17 @@ export default function DemandDetail() {
                     </ComponentCard>
                 )}
             </div>
+            
+            {/* Edit Demand Modal */}
+            <EditDemandModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                demandId={id}
+                onSuccess={() => {
+                    fetchDemand();
+                    setIsEditModalOpen(false);
+                }}
+            />
         </div>
     );
 }

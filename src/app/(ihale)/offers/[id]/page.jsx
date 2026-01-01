@@ -140,14 +140,6 @@ export default function OfferDetail() {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                                Tahmini Süre
-                            </label>
-                            <p className="text-gray-900 dark:text-white">
-                                {offer.estimatedTime || "-"}
-                            </p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                                 Oluşturulma Tarihi
                             </label>
                             <p className="text-gray-900 dark:text-white text-sm">

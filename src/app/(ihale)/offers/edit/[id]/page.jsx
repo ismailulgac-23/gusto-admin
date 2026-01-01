@@ -19,7 +19,6 @@ export default function EditOffer() {
     const [formData, setFormData] = useState({
         message: "",
         price: "",
-        estimatedTime: "",
         status: "PENDING",
     });
 
@@ -110,17 +109,6 @@ export default function EditOffer() {
                                 />
                             </div>
 
-                            <div>
-                                <Label htmlFor="estimatedTime">Tahmini Süre</Label>
-                                <Input
-                                    type="text"
-                                    id="estimatedTime"
-                                    name="estimatedTime"
-                                    value={formData.estimatedTime}
-                                    onChange={handleInputChange}
-                                    placeholder="Örn: 2 gün, 1 hafta"
-                                />
-                            </div>
 
                             <div>
                                 <Label htmlFor="status">Durum</Label>

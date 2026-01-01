@@ -26,7 +26,7 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, onSave, loading,
           </Link>
         )}
         {onSave && <Button onClick={onSave} disabled={loading}>{loading ? "Kaydediliyor..." : "Kaydet"}</Button>}
-        {onCreate && <Button onClick={onCreate} disabled={loading}>{loading ? "Oluşturuluyor..." : "Oluştur"}</Button>}
+        {onCreate && <Button onClick={onCreate} disabled={loading}>{loading ? "Düzenleniyor..." : "Düzenle"}</Button>}
       </div>
     </div>
   );

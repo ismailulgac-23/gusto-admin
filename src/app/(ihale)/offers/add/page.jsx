@@ -20,7 +20,6 @@ export default function AddOffer() {
         providerId: "",
         message: "",
         price: "",
-        estimatedTime: "",
         status: "PENDING",
     });
 
@@ -138,18 +137,6 @@ export default function AddOffer() {
                                 />
                             </div>
 
-                            <div>
-                                <Label htmlFor="estimatedTime">Tahmini Süre *</Label>
-                                <Input
-                                    type="text"
-                                    id="estimatedTime"
-                                    name="estimatedTime"
-                                    value={formData.estimatedTime}
-                                    onChange={handleInputChange}
-                                    placeholder="Örn: 2 gün, 1 hafta"
-                                    required
-                                />
-                            </div>
 
                             <div>
                                 <Label htmlFor="status">Durum</Label>
