@@ -140,7 +140,6 @@ export default function EditDemandModal({ isOpen, onClose, demandId, onSuccess }
     };
     
     const loadCountiesForCity = async (cityName) => {
-        if (availableCounties.length > 0) return; // Already loaded
         
         setLoadingCounties(true);
         try {
@@ -154,17 +153,15 @@ export default function EditDemandModal({ isOpen, onClose, demandId, onSuccess }
     };
     
     const handleCityChange = async (cityId) => {
+        
         const city = cities.find(c => c.id === cityId);
         if (!city) return;
         
         setSelectedCityId(cityId);
-        setSelectedCounty(''); // Reset county selection
-        setAvailableCounties([]); // Reset available counties
+        setSelectedCounty(''); 
+        setAvailableCounties([]); 
         
-        // Load counties for this city
-        if (city.name) {
-            await loadCountiesForCity(city.name);
-        }
+        await loadCountiesForCity(city.name);
     };
     
     const handleCountyChange = (county) => {
