@@ -9,6 +9,7 @@ import CKEditor from "@/components/editor/CKEditor";
 import ComponentCard from "@/components/common/ComponentCard";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
+import slugify from "slugify";
 import { getImage } from "@/utils";
 
 export default function EditBlog() {
@@ -58,25 +59,18 @@ export default function EditBlog() {
     }
   };
 
-  const slugify = (text) => {
-    const trMap = {
-      'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U'
-    };
-    let result = text;
-    for (let key in trMap) {
-      result = result.replace(new RegExp(key, 'g'), trMap[key]);
-    }
-    return result
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
+  const generateSlug = (text) => {
+    return slugify(text, {
+      lower: true,
+      strict: true,
+      locale: 'tr'
+    });
   };
 
-  const handleSlugChange = (e) => {
-    setSlug(slugify(e.target.value));
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    setSlug(generateSlug(newTitle));
   };
 
   const handleSubmit = async (e) => {
@@ -90,7 +84,7 @@ export default function EditBlog() {
     try {
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("slug", slug || slugify(title));
+      formData.append("slug", slug || generateSlug(title));
       formData.append("content", content);
       formData.append("tags", tags);
       if (image) {
@@ -137,19 +131,20 @@ export default function EditBlog() {
                 type="text"
                 placeholder="Blog başlığını giriniz..."
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={handleTitleChange}
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="slug">SEO URL (Slug)</Label>
+              <Label htmlFor="slug">SEO URL (Slug - Otomatik)</Label>
               <Input
                 id="slug"
                 type="text"
                 placeholder="blog-yazisi-url"
                 value={slug}
-                onChange={handleSlugChange}
+                disabled
+                className="bg-gray-100 cursor-not-allowed opacity-75"
               />
               {slug && (
                 <p className="mt-1 text-xs text-gray-400">
