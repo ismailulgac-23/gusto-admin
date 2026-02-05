@@ -81,6 +81,11 @@ const AppSidebar = () => {
           name: "Yöneticiler",
           path: "/admins",
         },
+        {
+          icon: <Icon icon="streamline-ultimate:layout-content" className="text-2xl" />,
+          name: "Blog",
+          path: "/blog",
+        },
         // İhale Sistemi - Yeni
         {
           icon: <Icon icon="ri:folder-line" className="text-2xl" />,
