@@ -58,6 +58,27 @@ export default function EditBlog() {
     }
   };
 
+  const slugify = (text) => {
+    const trMap = {
+      'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U'
+    };
+    let result = text;
+    for (let key in trMap) {
+      result = result.replace(new RegExp(key, 'g'), trMap[key]);
+    }
+    return result
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
+  const handleSlugChange = (e) => {
+    setSlug(slugify(e.target.value));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !content) {
@@ -69,7 +90,7 @@ export default function EditBlog() {
     try {
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("slug", slug);
+      formData.append("slug", slug || slugify(title));
       formData.append("content", content);
       formData.append("tags", tags);
       if (image) {
@@ -128,8 +149,13 @@ export default function EditBlog() {
                 type="text"
                 placeholder="blog-yazisi-url"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={handleSlugChange}
               />
+              {slug && (
+                <p className="mt-1 text-xs text-gray-400">
+                  Önizleme: <span className="text-primary">{slug}</span>
+                </p>
+              )}
             </div>
 
             <div>

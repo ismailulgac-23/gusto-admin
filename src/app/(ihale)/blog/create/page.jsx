@@ -32,6 +32,34 @@ export default function CreateBlog() {
     }
   };
 
+  const slugify = (text) => {
+    const trMap = {
+      'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U'
+    };
+    let result = text;
+    for (let key in trMap) {
+      result = result.replace(new RegExp(key, 'g'), trMap[key]);
+    }
+    return result
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
+  const handleTitleChange = (e) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    // Auto-generate slug if it hasn't been manually edited or is empty
+    setSlug(slugify(newTitle));
+  };
+
+  const handleSlugChange = (e) => {
+    setSlug(slugify(e.target.value));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title || !content || !image) {
@@ -43,7 +71,7 @@ export default function CreateBlog() {
     try {
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("slug", slug);
+      formData.append("slug", slug || slugify(title)); // Ensure we have a slug
       formData.append("content", content);
       formData.append("tags", tags);
       formData.append("image", image);
@@ -77,7 +105,7 @@ export default function CreateBlog() {
                 type="text"
                 placeholder="Blog başlığını giriniz..."
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={handleTitleChange}
                 required
               />
             </div>
@@ -87,10 +115,15 @@ export default function CreateBlog() {
               <Input
                 id="slug"
                 type="text"
-                placeholder="blog-yazisi-url (Boş bırakılırsa başlıktan üretilir)"
+                placeholder="blog-yazisi-url"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={handleSlugChange}
               />
+              {slug && (
+                <p className="mt-1 text-xs text-gray-400">
+                  Önizleme: <span className="text-primary">{slug}</span>
+                </p>
+              )}
             </div>
 
             <div>
