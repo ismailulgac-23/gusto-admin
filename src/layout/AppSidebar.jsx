@@ -30,28 +30,36 @@ const AppSidebar = () => {
   const pathname = usePathname();
   const [navItems, setItems] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingPaymentCount, setPendingPaymentCount] = useState(0);
 
   const userStore = useUserStore();
 
 
-  // Bekleyen talep sayısını çek
+  // Bekleyen talep ve ödeme bildirim sayılarını çek
   useEffect(() => {
-    const fetchPendingCount = async () => {
+    const fetchCounts = async () => {
       try {
-        const response = await axios.get('/admin/demands/pending/count');
-        if (response.data.success && response.data.data) {
-          setPendingCount(response.data.data.count || 0);
+        const [demandRes, paymentRes] = await Promise.all([
+          axios.get('/admin/demands/pending/count'),
+          axios.get('/admin/payment-notifications?status=PENDING&limit=1')
+        ]);
+
+        if (demandRes.data.success && demandRes.data.data) {
+          setPendingCount(demandRes.data.data.count || 0);
+        }
+
+        if (paymentRes.data.success && paymentRes.data.pagination) {
+          setPendingPaymentCount(paymentRes.data.pagination.total || 0);
         }
       } catch (err) {
-        console.error('Error fetching pending demands count:', err);
+        console.error('Error fetching counts:', err);
       }
     };
 
     const moderator = userStore.user?.isModerator;
     if (!moderator) {
-      fetchPendingCount();
-      // Her 30 saniyede bir güncelle
-      const interval = setInterval(fetchPendingCount, 30000);
+      fetchCounts();
+      const interval = setInterval(fetchCounts, 30000);
       return () => clearInterval(interval);
     }
   }, [userStore.user]);
@@ -107,6 +115,14 @@ const AppSidebar = () => {
           name: "Bekleyen Talepler",
           path: "/pending-demands",
           badge: true, // Badge gösterilecek
+          badgeCount: pendingCount
+        },
+        {
+          icon: <Icon icon="ri:money-dollar-circle-line" className="text-2xl" />,
+          name: "Ödeme Bildirimleri",
+          path: "/payment-notifications",
+          badge: true,
+          badgeCount: pendingPaymentCount
         },
         {
           icon: <Icon icon="ri:star-line" className="text-2xl" />,
@@ -208,18 +224,18 @@ const AppSidebar = () => {
                     }`}
                 >
                   {nav.icon}
-                  {!isExpanded && !isHovered && !isMobileOpen && nav.badge && pendingCount > 0 && (
+                  {!isExpanded && !isHovered && !isMobileOpen && nav.badge && nav.badgeCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center z-10">
-                      {pendingCount > 9 ? '9+' : pendingCount}
+                      {nav.badgeCount > 9 ? '9+' : nav.badgeCount}
                     </span>
                   )}
                 </span>
                 {(isExpanded || isHovered || isMobileOpen) && (
                   <span className={`menu-item-text flex items-center justify-between w-full`}>
                     <span>{nav.name}</span>
-                    {nav.badge && pendingCount > 0 && (
+                    {nav.badge && nav.badgeCount > 0 && (
                       <span className="ml-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 px-1.5 flex items-center justify-center">
-                        {pendingCount > 99 ? '99+' : pendingCount}
+                        {nav.badgeCount > 99 ? '99+' : nav.badgeCount}
                       </span>
                     )}
                   </span>
