@@ -140,6 +140,11 @@ const AppSidebar = () => {
           path: "/settings",
         },
         {
+          icon: <Icon icon="ri:play-circle-line" className="text-2xl" />,
+          name: "Review / DEMO Modu",
+          path: "/review-mode",
+        },
+        {
           icon: <Icon icon="ri:notification-3-line" className="text-2xl" />,
           name: "Bildirim Yönetimi",
           path: "/notifications",
