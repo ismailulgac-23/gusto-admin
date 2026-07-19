@@ -20,7 +20,6 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
     phoneNumber: '',
     userType: 'PROVIDER',
     bio: '',
-    location: '',
     profileImage: '',
     companyName: '',
     address: '',
@@ -125,7 +124,6 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
           phoneNumber: user.phoneNumber || '',
           userType: user.userType || 'PROVIDER',
           bio: user.bio || '',
-          location: user.location || '',
           profileImage: user.profileImage || '',
           companyName: user.companyName || '',
           address: user.address || '',
@@ -242,7 +240,6 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
         phoneNumber: formData.phoneNumber.trim(),
         userType: formData.userType,
         bio: formData.bio.trim() || null,
-        location: formData.location.trim() || null,
         profileImage: formData.profileImage.trim() || null,
         companyName: formData.companyName.trim() || null,
         address: formData.address.trim() || null,
@@ -425,19 +422,6 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
               </select>
             </div>
 
-            <div>
-              <Label>Konum (koordinat / serbest metin)</Label>
-              <Input
-                type="text"
-                placeholder="Örn: 36.545000, 31.999000"
-                value={formData.location}
-                onChange={(e) => handleChange('location', e.target.value)}
-              />
-              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                Mobil uygulama buraya kullanıcının GPS koordinatını yazar. Eşleştirme/filtreleme
-                için kullanılmaz — filtreleme İl alanına göre yapılır.
-              </p>
-            </div>
 
             <div className="md:col-span-2">
               <Label>Biyografi</Label>
