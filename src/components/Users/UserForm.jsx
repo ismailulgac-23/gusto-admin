@@ -38,6 +38,7 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
   // İl listesi ve seçili ile ait ilçeler (ilçeler /locations/cities/:il/counties'ten gelir)
   const [cities, setCities] = useState([]);
   const [counties, setCounties] = useState([]);
+  const [countiesError, setCountiesError] = useState(null);
 
   // UI states
   const [loading, setLoading] = useState(false);
@@ -98,9 +99,13 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
       try {
         const response = await axios.get(`/locations/cities/${encodeURIComponent(city.name)}/counties`);
         setCounties(response.data.data || []);
+        setCountiesError(null);
       } catch (err) {
         console.error('İlçeler alınamadı:', err);
         setCounties([]);
+        setCountiesError(
+          err.response?.data?.message || 'İlçe listesi alınamadı. İlçeyi elle yazabilirsiniz.'
+        );
       }
     };
     fetchCounties();
@@ -409,17 +414,31 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
 
             <div>
               <Label>İlçe</Label>
-              <select
-                value={formData.countie}
-                onChange={(e) => handleChange('countie', e.target.value)}
-                disabled={!formData.cityId || counties.length === 0}
-                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-none disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-              >
-                <option value="">{formData.cityId ? 'Seçiniz' : 'Önce il seçiniz'}</option>
-                {counties.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              {counties.length > 0 ? (
+                <select
+                  value={formData.countie}
+                  onChange={(e) => handleChange('countie', e.target.value)}
+                  disabled={!formData.cityId}
+                  className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-none disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                >
+                  <option value="">Seçiniz</option>
+                  {counties.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              ) : (
+                // İlçe listesi gelmediyse alan kilitlenmesin; elle yazılabilsin.
+                <Input
+                  type="text"
+                  placeholder={formData.cityId ? 'İlçe adı' : 'Önce il seçiniz'}
+                  value={formData.countie}
+                  disabled={!formData.cityId}
+                  onChange={(e) => handleChange('countie', e.target.value)}
+                />
+              )}
+              {countiesError && (
+                <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">{countiesError}</p>
+              )}
             </div>
 
 
