@@ -29,11 +29,16 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
     isAdmin: false,
     password: '',
     categories: [],
+    cityId: '',
+    countie: '',
   });
 
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  // İl listesi ve seçili ile ait ilçeler (ilçeler /locations/cities/:il/counties'ten gelir)
+  const [cities, setCities] = useState([]);
+  const [counties, setCounties] = useState([]);
 
   // UI states
   const [loading, setLoading] = useState(false);
@@ -70,6 +75,38 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
     fetchCategories();
   }, []);
 
+  // İl listesini çek
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await axios.get('/settings/cities');
+        setCities(response.data.data || []);
+      } catch (err) {
+        console.error('Şehirler alınamadı:', err);
+      }
+    };
+    fetchCities();
+  }, []);
+
+  // Seçili ile göre ilçeleri çek
+  useEffect(() => {
+    const fetchCounties = async () => {
+      const city = cities.find((c) => c.id === formData.cityId);
+      if (!city) {
+        setCounties([]);
+        return;
+      }
+      try {
+        const response = await axios.get(`/locations/cities/${encodeURIComponent(city.name)}/counties`);
+        setCounties(response.data.data || []);
+      } catch (err) {
+        console.error('İlçeler alınamadı:', err);
+        setCounties([]);
+      }
+    };
+    fetchCounties();
+  }, [formData.cityId, cities]);
+
   // Fetch user data in edit mode
   useEffect(() => {
     const fetchUser = async () => {
@@ -97,6 +134,8 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
           isAdmin: user.isAdmin || false,
           password: '',
           categories: user.categories || [],
+          cityId: user.cityId || user.city?.id || '',
+          countie: user.countie || '',
         });
 
         // Set selected categories
@@ -211,6 +250,8 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
         isActive: formData.isActive,
         isAdmin: formData.isAdmin,
         categories: formData.categories,
+        cityId: formData.cityId || null,
+        countie: formData.countie || null,
       };
 
       // Add password only if provided
@@ -353,13 +394,49 @@ export default function UserForm({ mode = 'edit', userId = null, onSuccess, onEr
             </div>
 
             <div>
-              <Label>Konum</Label>
+              <Label>İl</Label>
+              <select
+                value={formData.cityId}
+                onChange={(e) => {
+                  handleChange('cityId', e.target.value);
+                  handleChange('countie', ''); // il değişince ilçe sıfırlanır
+                }}
+                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+              >
+                <option value="">Seçiniz</option>
+                {cities.map((city) => (
+                  <option key={city.id} value={city.id}>{city.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>İlçe</Label>
+              <select
+                value={formData.countie}
+                onChange={(e) => handleChange('countie', e.target.value)}
+                disabled={!formData.cityId || counties.length === 0}
+                className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-none disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+              >
+                <option value="">{formData.cityId ? 'Seçiniz' : 'Önce il seçiniz'}</option>
+                {counties.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Konum (koordinat / serbest metin)</Label>
               <Input
                 type="text"
-                placeholder="Konum"
+                placeholder="Örn: 36.545000, 31.999000"
                 value={formData.location}
                 onChange={(e) => handleChange('location', e.target.value)}
               />
+              <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                Mobil uygulama buraya kullanıcının GPS koordinatını yazar. Eşleştirme/filtreleme
+                için kullanılmaz — filtreleme İl alanına göre yapılır.
+              </p>
             </div>
 
             <div className="md:col-span-2">

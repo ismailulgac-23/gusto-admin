@@ -149,6 +149,16 @@ const AppSidebar = () => {
           name: "Bildirim Yönetimi",
           path: "/notifications",
         },
+        {
+          icon: <Icon icon="ri:send-plane-line" className="text-2xl" />,
+          name: "Toplu Bildirim",
+          path: "/bulk-notifications",
+        },
+        {
+          icon: <Icon icon="ri:smartphone-line" className="text-2xl" />,
+          name: "Uygulama Sürümü",
+          path: "/app-version",
+        },
       ]);
     } else {
       setItems([
